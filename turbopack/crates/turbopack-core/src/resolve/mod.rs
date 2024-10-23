@@ -1534,6 +1534,7 @@ pub async fn url_resolve(
         origin.origin_path(),
         result,
         reference_type.clone(),
+        false,
     );
     handle_resolve_error(
         result,
