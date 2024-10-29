@@ -162,13 +162,13 @@ fn react_server_actions_server_errors(input: PathBuf) {
     test_fixture(
         syntax(),
         &|tr| {
-            chain!(
+            (
                 resolver(Mark::new(), Mark::new(), false),
                 server_components(
                     FileName::Real(PathBuf::from("/app/item.js")).into(),
                     Config::WithOptions(Options {
-                        is_react_server_layer: true
-                    },),
+                        is_react_server_layer: true,
+                    }),
                     tr.comments.as_ref().clone(),
                     None,
                 ),
@@ -177,10 +177,10 @@ fn react_server_actions_server_errors(input: PathBuf) {
                     server_actions::Config {
                         is_react_server_layer: true,
                         enabled: true,
-                        hash_salt: "".into()
+                        hash_salt: "".into(),
                     },
                     tr.comments.as_ref().clone(),
-                )
+                ),
             )
         },
         &input,
@@ -199,13 +199,13 @@ fn react_server_actions_client_errors(input: PathBuf) {
     test_fixture(
         syntax(),
         &|tr| {
-            chain!(
+            (
                 resolver(Mark::new(), Mark::new(), false),
                 server_components(
                     FileName::Real(PathBuf::from("/app/item.js")).into(),
                     Config::WithOptions(Options {
-                        is_react_server_layer: false
-                    },),
+                        is_react_server_layer: false,
+                    }),
                     tr.comments.as_ref().clone(),
                     None,
                 ),
@@ -214,10 +214,10 @@ fn react_server_actions_client_errors(input: PathBuf) {
                     server_actions::Config {
                         is_react_server_layer: false,
                         enabled: true,
-                        hash_salt: "".into()
+                        hash_salt: "".into(),
                     },
                     tr.comments.as_ref().clone(),
-                )
+                ),
             )
         },
         &input,

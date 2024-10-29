@@ -220,10 +220,10 @@ fn next_ssg_fixture(input: PathBuf) {
                 top_level_mark,
                 unresolved_mark,
             );
-            chain!(
+            (
                 resolver(unresolved_mark, top_level_mark, true),
                 next_ssg(Default::default()),
-                jsx
+                jsx,
             )
         },
         &input,
@@ -399,17 +399,17 @@ fn server_actions_server_fixture(input: PathBuf) {
     test_fixture(
         syntax(),
         &|_tr| {
-            chain!(
+            (
                 resolver(Mark::new(), Mark::new(), false),
                 server_actions(
                     &FileName::Real("/app/item.js".into()),
                     server_actions::Config {
                         is_react_server_layer: true,
                         enabled: true,
-                        hash_salt: "".into()
+                        hash_salt: "".into(),
                     },
                     _tr.comments.as_ref().clone(),
-                )
+                ),
             )
         },
         &input,
@@ -424,17 +424,17 @@ fn server_actions_client_fixture(input: PathBuf) {
     test_fixture(
         syntax(),
         &|_tr| {
-            chain!(
+            (
                 resolver(Mark::new(), Mark::new(), false),
                 server_actions(
                     &FileName::Real("/app/item.js".into()),
                     server_actions::Config {
                         is_react_server_layer: false,
                         enabled: true,
-                        hash_salt: "".into()
+                        hash_salt: "".into(),
                     },
                     _tr.comments.as_ref().clone(),
-                )
+                ),
             )
         },
         &input,
@@ -454,7 +454,7 @@ fn cjs_optimize_fixture(input: PathBuf) {
 
             let unresolved_ctxt = SyntaxContext::empty().apply_mark(unresolved_mark);
 
-            chain!(
+            (
                 resolver(unresolved_mark, top_level_mark, false),
                 as_folder(cjs_optimizer(
                     json(
@@ -468,10 +468,10 @@ fn cjs_optimize_fixture(input: PathBuf) {
                                 }
                             }
                         }
-                        "#
+                        "#,
                     ),
-                    unresolved_ctxt
-                ))
+                    unresolved_ctxt,
+                )),
             )
         },
         &input,
@@ -489,15 +489,15 @@ fn named_import_transform_fixture(input: PathBuf) {
             let unresolved_mark = Mark::new();
             let top_level_mark = Mark::new();
 
-            chain!(
+            (
                 resolver(unresolved_mark, top_level_mark, false),
                 named_import_transform(json(
                     r#"
                     {
                         "packages": ["foo", "bar"]
                     }
-                    "#
-                ))
+                    "#,
+                )),
             )
         },
         &input,
@@ -515,15 +515,15 @@ fn optimize_barrel_fixture(input: PathBuf) {
             let unresolved_mark = Mark::new();
             let top_level_mark = Mark::new();
 
-            chain!(
+            (
                 resolver(unresolved_mark, top_level_mark, false),
                 optimize_barrel(json(
                     r#"
                         {
                             "wildcard": false
                         }
-                    "#
-                ))
+                    "#,
+                )),
             )
         },
         &input,
@@ -541,15 +541,15 @@ fn optimize_barrel_wildcard_fixture(input: PathBuf) {
             let unresolved_mark = Mark::new();
             let top_level_mark = Mark::new();
 
-            chain!(
+            (
                 resolver(unresolved_mark, top_level_mark, false),
                 optimize_barrel(json(
                     r#"
                         {
                             "wildcard": true
                         }
-                    "#
-                ))
+                    "#,
+                )),
             )
         },
         &input,
@@ -567,11 +567,11 @@ fn optimize_server_react_fixture(input: PathBuf) {
             let unresolved_mark = Mark::new();
             let top_level_mark = Mark::new();
 
-            chain!(
+            (
                 resolver(unresolved_mark, top_level_mark, false),
                 optimize_server_react(optimize_server_react::Config {
-                    optimize_use_state: true
-                })
+                    optimize_use_state: true,
+                }),
             )
         },
         &input,
@@ -596,9 +596,9 @@ fn pure(input: PathBuf) {
             let unresolved_mark = Mark::new();
             let top_level_mark = Mark::new();
 
-            chain!(
+            (
                 resolver(unresolved_mark, top_level_mark, false),
-                as_folder(pure_magic(tr.comments.clone()))
+                as_folder(pure_magic(tr.comments.clone())),
             )
         },
         &input,
@@ -629,10 +629,10 @@ fn run_stip_page_exports_test(input: &Path, output: &Path, mode: ExportFilter) {
                 top_level_mark,
                 unresolved_mark,
             );
-            chain!(
+            (
                 swc_core::ecma::transforms::base::resolver(unresolved_mark, top_level_mark, true),
                 next_transform_strip_page_exports(mode, Default::default()),
-                jsx
+                jsx,
             )
         },
         input,
@@ -665,9 +665,9 @@ fn test_debug_name(input: PathBuf) {
             let top_level_mark = Mark::fresh(Mark::root());
             let unresolved_mark = Mark::fresh(Mark::root());
 
-            chain!(
+            (
                 swc_core::ecma::transforms::base::resolver(unresolved_mark, top_level_mark, true),
-                debug_fn_name()
+                debug_fn_name(),
             )
         },
         &input,
@@ -686,7 +686,7 @@ fn test_edge_assert(input: PathBuf) {
             let top_level_mark = Mark::fresh(Mark::root());
             let unresolved_mark = Mark::fresh(Mark::root());
 
-            chain!(
+            (
                 swc_core::ecma::transforms::base::resolver(unresolved_mark, top_level_mark, true),
                 lint_to_fold(warn_for_edge_runtime(
                     t.cm.clone(),
@@ -695,8 +695,8 @@ fn test_edge_assert(input: PathBuf) {
                         unresolved_ctxt: SyntaxContext::empty().apply_mark(unresolved_mark),
                     },
                     true,
-                    true
-                ))
+                    true,
+                )),
             )
         },
         &input,
