@@ -15,8 +15,8 @@ use swc_core::{
         atoms::{js_word, JsWord},
         utils::{prepend_stmts, quote_ident, quote_str, ExprFactory},
         visit::{
-            noop_visit_mut_type, noop_visit_type, visit_mut_pass, Fold, Visit, VisitMut,
-            VisitMutWith, VisitWith,
+            noop_visit_mut_type, noop_visit_type, visit_mut_pass, Visit, VisitMut, VisitMutWith,
+            VisitWith,
         },
     },
 };

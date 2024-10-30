@@ -162,8 +162,8 @@ where
         .map(|env| targets_to_versions(env.targets.clone()).expect("failed to parse env.targets"))
         .unwrap_or_default();
 
-    let styled_jsx = if let Some(config) = opts.styled_jsx.to_option() {
-        Some(styled_jsx::visitor::styled_jsx(
+    let styled_jsx = opts.styled_jsx.to_option().map(|config| {
+        styled_jsx::visitor::styled_jsx(
             cm.clone(),
             (*file.name).clone(),
             styled_jsx::visitor::Config {
@@ -171,10 +171,8 @@ where
                 browsers: target_browsers,
             },
             styled_jsx::visitor::NativeConfig { process_css: None },
-        ))
-    } else {
-        None
-    };
+        )
+    });
 
     (
         (
@@ -246,32 +244,18 @@ where
             },
         ),
         (
-            match &opts.shake_exports {
-                Some(config) => Some(crate::transforms::shake_exports::shake_exports(
-                    config.clone(),
-                )),
-                None => None,
-            },
-            match &opts.auto_modularize_imports {
-                Some(config) => Some(
-                    crate::transforms::named_import_transform::named_import_transform(
-                        config.clone(),
-                    ),
-                ),
-                None => None,
-            },
-            match &opts.optimize_barrel_exports {
-                Some(config) => Some(crate::transforms::optimize_barrel::optimize_barrel(
-                    config.clone(),
-                )),
-                _ => None,
-            },
-            match &opts.optimize_server_react {
-                Some(config) => Some(
-                    crate::transforms::optimize_server_react::optimize_server_react(config.clone()),
-                ),
-                _ => None,
-            },
+            opts.shake_exports
+                .as_ref()
+                .map(|config| crate::transforms::shake_exports::shake_exports(config.clone())),
+            opts.auto_modularize_imports.as_ref().map(|config| {
+                crate::transforms::named_import_transform::named_import_transform(config.clone())
+            }),
+            opts.optimize_barrel_exports
+                .as_ref()
+                .map(|config| crate::transforms::optimize_barrel::optimize_barrel(config.clone())),
+            opts.optimize_server_react.as_ref().map(|config| {
+                crate::transforms::optimize_server_react::optimize_server_react(config.clone())
+            }),
             opts.emotion.as_ref().and_then(|config| {
                 if !config.enabled.unwrap_or(false) {
                     return None;
@@ -291,27 +275,22 @@ where
                 }
             }),
             modularize_imports::modularize_imports(modularize_imports_config),
-            match &opts.font_loaders {
-                Some(config) => Some(next_font_loaders(config.clone())),
-                None => None,
-            },
-            match &opts.server_actions {
-                Some(config) => Some(crate::transforms::server_actions::server_actions(
+            opts.font_loaders
+                .as_ref()
+                .map(|config| next_font_loaders(config.clone())),
+            opts.server_actions.as_ref().map(|config| {
+                crate::transforms::server_actions::server_actions(
                     &file.name,
                     config.clone(),
                     comments.clone(),
-                )),
-                None => None,
-            },
-            match &opts.cjs_require_optimizer {
-                Some(config) => Some(visit_mut_pass(
-                    crate::transforms::cjs_optimizer::cjs_optimizer(
-                        config.clone(),
-                        SyntaxContext::empty().apply_mark(unresolved_mark),
-                    ),
-                )),
-                None => None,
-            },
+                )
+            }),
+            opts.cjs_require_optimizer.as_ref().map(|config| {
+                visit_mut_pass(crate::transforms::cjs_optimizer::cjs_optimizer(
+                    config.clone(),
+                    SyntaxContext::empty().apply_mark(unresolved_mark),
+                ))
+            }),
         ),
         (
             Optional::new(
