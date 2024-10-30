@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use swc_core::{
     atoms::JsWord,
     base::SwcComments,
-    common::{chain, collections::AHashMap, comments::Comments, util::take::Take, Mark, SourceMap},
+    common::{collections::AHashMap, comments::Comments, util::take::Take, Mark, SourceMap},
     ecma::{
         ast::{Module, ModuleItem, Program, Script},
         preset_env::{self, Targets},
@@ -209,7 +209,7 @@ impl EcmascriptInputTransform {
             EcmascriptInputTransform::CommonJs => {
                 // Explicit type annotation to ensure that we don't duplicate transforms in the
                 // final binary
-                program.visit_mut_with(&mut swc_core::ecma::transforms::module::common_js(
+                program.apply(swc_core::ecma::transforms::module::common_js(
                     swc_core::ecma::transforms::module::path::Resolver::Default,
                     unresolved_mark,
                     swc_core::ecma::transforms::module::util::Config {

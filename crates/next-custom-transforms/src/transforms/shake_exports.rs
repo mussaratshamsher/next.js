@@ -5,7 +5,7 @@ use swc_core::{
         ast::*,
         atoms::{js_word, JsWord},
         transforms::optimization::simplify::dce::{dce, Config as DCEConfig},
-        visit::{Fold, FoldWith},
+        visit::{fold_pass, Fold, FoldWith, VisitMutWith},
     },
 };
 
@@ -14,11 +14,11 @@ pub struct Config {
     pub ignore: Vec<JsWord>,
 }
 
-pub fn shake_exports(config: Config) -> impl Fold {
-    ExportShaker {
+pub fn shake_exports(config: Config) -> impl Pass {
+    fold_pass(ExportShaker {
         ignore: config.ignore,
         ..Default::default()
-    }
+    })
 }
 
 #[derive(Debug, Default)]
@@ -27,10 +27,13 @@ struct ExportShaker {
     remove_export: bool,
 }
 
+/// TODO: Implement this as a [Pass] instead of a full visitor ([Fold])
 impl Fold for ExportShaker {
-    fn fold_module(&mut self, module: Module) -> Module {
-        let module = module.fold_children_with(self);
-        module.fold_with(&mut dce(DCEConfig::default(), Mark::new()))
+    fn fold_module(&mut self, mut module: Module) -> Module {
+        module = module.fold_children_with(self);
+        module.visit_mut_with(&mut dce(DCEConfig::default(), Mark::new()));
+
+        module
     }
 
     fn fold_module_items(&mut self, items: Vec<ModuleItem>) -> Vec<ModuleItem> {

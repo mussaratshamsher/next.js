@@ -11,7 +11,7 @@ pub struct Config {
     pub wildcard: bool,
 }
 
-pub fn optimize_barrel(config: Config) -> impl Fold {
+pub fn optimize_barrel(config: Config) -> impl Pass {
     OptimizeBarrel {
         wildcard: config.wildcard,
     }
@@ -22,6 +22,7 @@ struct OptimizeBarrel {
     wildcard: bool,
 }
 
+/// TODO: Implement this as a [Pass] instead of a full visitor ([Fold])
 impl Fold for OptimizeBarrel {
     fn fold_module_items(&mut self, items: Vec<ModuleItem>) -> Vec<ModuleItem> {
         // One pre-pass to find all the local idents that we are referencing, so we can

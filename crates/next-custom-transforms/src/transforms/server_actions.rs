@@ -39,7 +39,7 @@ pub fn server_actions<C: Comments>(
     file_name: &FileName,
     config: Config,
     comments: C,
-) -> impl VisitMut + Fold {
+) -> impl VisitMut + Pass {
     visit_mut_pass(ServerActions {
         config,
         comments,

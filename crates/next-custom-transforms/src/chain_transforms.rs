@@ -12,9 +12,8 @@ use swc_core::{
         FileName, Mark, SourceFile, SourceMap, SyntaxContext,
     },
     ecma::{
-        ast::EsVersion,
+        ast::{noop_pass, EsVersion, Pass},
         parser::parse_file_as_module,
-        transforms::base::pass::noop,
         visit::{visit_mut_pass, Fold},
     },
 };
@@ -126,12 +125,12 @@ pub fn custom_before_pass<'a, C>(
     comments: C,
     eliminated_packages: Rc<RefCell<FxHashSet<String>>>,
     unresolved_mark: Mark,
-) -> impl Fold + 'a
+) -> impl Pass + 'a
 where
     C: Clone + Comments + 'a,
 {
     #[cfg(target_arch = "wasm32")]
-    let relay_plugin = noop();
+    let relay_plugin = noop_pass();
 
     #[cfg(not(target_arch = "wasm32"))]
     let relay_plugin = {
@@ -144,7 +143,7 @@ where
                 None,
             ))
         } else {
-            Either::Right(noop())
+            Either::Right(noop_pass())
         }
     };
 
@@ -164,7 +163,7 @@ where
         .unwrap_or_default();
 
     let styled_jsx = if let Some(config) = opts.styled_jsx.to_option() {
-        Either::Left(styled_jsx::visitor::styled_jsx(
+        Some(styled_jsx::visitor::styled_jsx(
             cm.clone(),
             (*file.name).clone(),
             styled_jsx::visitor::Config {
@@ -174,7 +173,7 @@ where
             styled_jsx::visitor::NativeConfig { process_css: None },
         ))
     } else {
-        Either::Right(noop())
+        None
     };
 
     (
@@ -182,15 +181,13 @@ where
             opts.is_page_file,
         ),
         match &opts.server_components {
-            Some(config) if config.truthy() => {
-                Either::Left(react_server_components::server_components(
-                    file.name.clone(),
-                    config.clone(),
-                    comments.clone(),
-                    opts.app_dir.clone(),
-                ))
-            }
-            _ => Either::Right(noop()),
+            Some(config) if config.truthy() => Some(react_server_components::server_components(
+                file.name.clone(),
+                config.clone(),
+                comments.clone(),
+                opts.app_dir.clone(),
+            )),
+            _ => None,
         },
         styled_jsx,
         match &opts.styled_components {
@@ -200,7 +197,7 @@ where
                 config.clone(),
                 NoopComments,
             )),
-            None => Either::Right(noop()),
+            None => Either::Right(noop_pass()),
         },
         Optional::new(
             crate::transforms::next_ssg::next_ssg(eliminated_packages),
@@ -232,84 +229,81 @@ where
         ),
         relay_plugin,
         match &opts.remove_console {
-            Some(config) if config.truthy() => Either::Left(remove_console::remove_console(
+            Some(config) if config.truthy() => Some(remove_console::remove_console(
                 config.clone(),
                 SyntaxContext::empty().apply_mark(unresolved_mark),
             )),
-            _ => Either::Right(noop()),
+            _ => None,
         },
         match &opts.react_remove_properties {
-            Some(config) if config.truthy() => Either::Left(
+            Some(config) if config.truthy() => Some(
                 react_remove_properties::react_remove_properties(config.clone()),
             ),
-            _ => Either::Right(noop()),
+            _ => None,
         },
         match &opts.shake_exports {
-            Some(config) => Either::Left(crate::transforms::shake_exports::shake_exports(
+            Some(config) => Some(crate::transforms::shake_exports::shake_exports(
                 config.clone(),
             )),
-            None => Either::Right(noop()),
+            None => None,
         },
         match &opts.auto_modularize_imports {
-            Some(config) => Either::Left(
+            Some(config) => Some(
                 crate::transforms::named_import_transform::named_import_transform(config.clone()),
             ),
-            None => Either::Right(noop()),
+            None => None,
         },
         match &opts.optimize_barrel_exports {
-            Some(config) => Either::Left(crate::transforms::optimize_barrel::optimize_barrel(
+            Some(config) => Some(crate::transforms::optimize_barrel::optimize_barrel(
                 config.clone(),
             )),
-            _ => Either::Right(noop()),
+            _ => None,
         },
         match &opts.optimize_server_react {
-            Some(config) => Either::Left(
+            Some(config) => Some(
                 crate::transforms::optimize_server_react::optimize_server_react(config.clone()),
             ),
-            _ => Either::Right(noop()),
+            _ => None,
         },
-        opts.emotion
-            .as_ref()
-            .and_then(|config| {
-                if !config.enabled.unwrap_or(false) {
-                    return None;
-                }
-                if let FileName::Real(path) = &*file.name {
-                    path.to_str().map(|_| {
-                        Either::Left(swc_emotion::EmotionTransformer::new(
-                            config.clone(),
-                            path,
-                            file.src_hash as u32,
-                            cm,
-                            comments.clone(),
-                        ))
-                    })
-                } else {
-                    None
-                }
-            })
-            .unwrap_or_else(|| Either::Right(noop())),
+        opts.emotion.as_ref().and_then(|config| {
+            if !config.enabled.unwrap_or(false) {
+                return None;
+            }
+            if let FileName::Real(path) = &*file.name {
+                path.to_str().map(|_| {
+                    Some(swc_emotion::EmotionTransformer::new(
+                        config.clone(),
+                        path,
+                        file.src_hash as u32,
+                        cm,
+                        comments.clone(),
+                    ))
+                })
+            } else {
+                None
+            }
+        }),
         modularize_imports::modularize_imports(modularize_imports_config),
         match &opts.font_loaders {
-            Some(config) => Either::Left(next_font_loaders(config.clone())),
-            None => Either::Right(noop()),
+            Some(config) => Some(next_font_loaders(config.clone())),
+            None => None,
         },
         match &opts.server_actions {
-            Some(config) => Either::Left(crate::transforms::server_actions::server_actions(
+            Some(config) => Some(crate::transforms::server_actions::server_actions(
                 &file.name,
                 config.clone(),
                 comments.clone(),
             )),
-            None => Either::Right(noop()),
+            None => None,
         },
         match &opts.cjs_require_optimizer {
-            Some(config) => Either::Left(visit_mut_pass(
+            Some(config) => Some(visit_mut_pass(
                 crate::transforms::cjs_optimizer::cjs_optimizer(
                     config.clone(),
                     SyntaxContext::empty().apply_mark(unresolved_mark),
                 ),
             )),
-            None => Either::Right(noop()),
+            None => None,
         },
         Optional::new(
             crate::transforms::debug_fn_name::debug_fn_name(),
