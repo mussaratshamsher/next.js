@@ -10,7 +10,7 @@ use swc_core::{
         ast::{Module, ModuleItem, Program, Script},
         preset_env::{self, Targets},
         transforms::{
-            base::{feature::FeatureFlag, helpers::inject_helpers, Assumptions},
+            base::{assumptions::Assumptions, feature::FeatureFlag, helpers::inject_helpers},
             optimization::inline_globals2,
             react::react,
         },

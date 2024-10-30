@@ -3,7 +3,11 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use swc_core::{
     common::DUMMY_SP,
-    ecma::{ast::*, utils::private_ident, visit::Fold},
+    ecma::{
+        ast::*,
+        utils::private_ident,
+        visit::{fold_pass, Fold},
+    },
 };
 
 #[derive(Clone, Debug, Deserialize)]
@@ -12,9 +16,9 @@ pub struct Config {
 }
 
 pub fn optimize_barrel(config: Config) -> impl Pass {
-    OptimizeBarrel {
+    fold_pass(OptimizeBarrel {
         wildcard: config.wildcard,
-    }
+    })
 }
 
 #[derive(Debug, Default)]
