@@ -14,7 +14,7 @@ use swc_core::{
     ecma::{
         ast::{noop_pass, EsVersion, Pass},
         parser::parse_file_as_module,
-        visit::visit_mut_pass,
+        visit::{fold_pass, visit_mut_pass},
     },
 };
 
@@ -278,13 +278,13 @@ where
                 }
                 if let FileName::Real(path) = &*file.name {
                     path.to_str().map(|_| {
-                        Some(swc_emotion::EmotionTransformer::new(
+                        Some(fold_pass(swc_emotion::EmotionTransformer::new(
                             config.clone(),
                             path,
                             file.src_hash as u32,
                             cm,
                             comments.clone(),
-                        ))
+                        )))
                     })
                 } else {
                     None
