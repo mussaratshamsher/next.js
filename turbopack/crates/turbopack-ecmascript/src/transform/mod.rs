@@ -14,7 +14,6 @@ use swc_core::{
             optimization::inline_globals2,
             react::react,
         },
-        visit::{FoldWith, VisitMutWith},
     },
     quote,
 };
@@ -209,7 +208,7 @@ impl EcmascriptInputTransform {
             EcmascriptInputTransform::CommonJs => {
                 // Explicit type annotation to ensure that we don't duplicate transforms in the
                 // final binary
-                program.apply(swc_core::ecma::transforms::module::common_js(
+                program.mutate(swc_core::ecma::transforms::module::common_js(
                     swc_core::ecma::transforms::module::path::Resolver::Default,
                     unresolved_mark,
                     swc_core::ecma::transforms::module::util::Config {
@@ -249,7 +248,7 @@ impl EcmascriptInputTransform {
 
                 // Explicit type annotation to ensure that we don't duplicate transforms in the
                 // final binary
-                *program = module_program.fold_with(&mut (
+                *program = module_program.apply((
                     preset_env::preset_env::<&'_ dyn Comments>(
                         top_level_mark,
                         Some(&comments),
@@ -266,7 +265,7 @@ impl EcmascriptInputTransform {
             } => {
                 use swc_core::ecma::transforms::typescript::typescript;
                 let config = Default::default();
-                program.visit_mut_with(&mut typescript(config, unresolved_mark, top_level_mark));
+                program.mutate(typescript(config, unresolved_mark, top_level_mark));
             }
             EcmascriptInputTransform::Decorators {
                 is_legacy,
@@ -282,8 +281,7 @@ impl EcmascriptInputTransform {
                     ..Default::default()
                 };
 
-                let p = std::mem::replace(program, Program::Module(Module::dummy()));
-                *program = p.fold_with(&mut (decorators(config), inject_helpers(unresolved_mark)));
+                program.mutate((decorators(config), inject_helpers(unresolved_mark)));
             }
             EcmascriptInputTransform::Plugin(transform) => {
                 transform.await?.transform(program, ctx).await?

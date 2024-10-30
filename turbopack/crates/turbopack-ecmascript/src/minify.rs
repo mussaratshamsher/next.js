@@ -17,7 +17,6 @@ use swc_core::{
         minifier::option::{ExtraOptions, MangleOptions, MinifyOptions},
         parser::{lexer::Lexer, Parser, StringInput, Syntax},
         transforms::base::fixer::paren_remover,
-        visit::FoldWith,
     },
 };
 use turbo_tasks::Vc;

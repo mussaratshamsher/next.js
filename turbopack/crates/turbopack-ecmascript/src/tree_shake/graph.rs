@@ -1147,6 +1147,7 @@ impl DepGraph {
                                 || decl.init.as_deref().map_or(false, |e| {
                                     e.may_have_side_effects(&ExprCtx {
                                         unresolved_ctxt,
+                                        in_strict: false,
                                         is_unresolved_ref_safe: false,
                                     })
                                 }));

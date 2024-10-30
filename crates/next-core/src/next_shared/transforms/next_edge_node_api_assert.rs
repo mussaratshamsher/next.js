@@ -42,6 +42,7 @@ impl CustomTransformer for NextEdgeNodeApiAssert {
         let mut visitor = warn_for_edge_runtime(
             ctx.source_map.clone(),
             ExprCtx {
+                in_strict: false,
                 is_unresolved_ref_safe: false,
                 unresolved_ctxt: SyntaxContext::empty().apply_mark(ctx.unresolved_mark),
             },
